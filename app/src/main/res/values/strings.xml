@@ -2,6 +2,7 @@
     <string name="app_name">InstagramClone</string>
     <string name="login">LOG IN</string>
     <string name="sign_up">SIGN UP</string>
+    <string name="sign_out">Sign out</string>
     <string name="share">SHARE</string>
     <string name="welcome">WELCOME</string>
     <string name="email">Email</string>
