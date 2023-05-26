@@ -1,4 +1,4 @@
-package com.tutkuozbakir.instagramclone
+package com.tutkuozbakir.instagramclone.view
 
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -13,13 +13,19 @@ import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
-import androidx.core.app.ActivityCompat.startActivityForResult
 import androidx.core.content.ContextCompat
 import com.google.android.material.snackbar.Snackbar
+import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.auth
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
+import com.google.firebase.storage.FirebaseStorage
+import com.google.firebase.storage.ktx.storage
+import com.tutkuozbakir.instagramclone.R
 import com.tutkuozbakir.instagramclone.databinding.ActivitySharePostBinding
+import java.util.UUID
 
 class SharePostActivity : AppCompatActivity() {
 
@@ -28,6 +34,8 @@ class SharePostActivity : AppCompatActivity() {
     private var selectedImage: Uri? = null
     private lateinit var activityResultLauncher: ActivityResultLauncher<Intent>
     private lateinit var permissionLauncher: ActivityResultLauncher<String>
+    private lateinit var firestore: FirebaseFirestore //database
+    private lateinit var storage: FirebaseStorage //images
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -36,17 +44,10 @@ class SharePostActivity : AppCompatActivity() {
         setContentView(view)
 
         auth = Firebase.auth
+        firestore = Firebase.firestore
+        storage = Firebase.storage
 
         registerLaunchers()
-
-        binding.imageView.setOnClickListener {
-            selectImage()
-        }
-
-        binding.buttonSharePost.setOnClickListener {
-            sharePost()
-        }
-
     }
 
 
@@ -73,17 +74,17 @@ class SharePostActivity : AppCompatActivity() {
         }
     }
 
-    private fun selectImage() {
+    fun selectImage(view: View) {
         if(ContextCompat.checkSelfPermission(this@SharePostActivity, android.Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED){
             if(ActivityCompat.shouldShowRequestPermissionRationale(this@SharePostActivity, android.Manifest.permission.READ_EXTERNAL_STORAGE)){
                 //show snackbar & request permission
-                Snackbar.make(binding.imageView, "Permission needed for gallery.",Snackbar.LENGTH_INDEFINITE).setAction("Give permission",
+                Snackbar.make(view, "Permission needed for gallery.",Snackbar.LENGTH_INDEFINITE).setAction("Give permission",
                     View.OnClickListener {
                         //request permission
                         permissionLauncher.launch(android.Manifest.permission.READ_EXTERNAL_STORAGE)
                     }).show()
             }else{
-                //resuest permission
+                permissionLauncher.launch(android.Manifest.permission.READ_EXTERNAL_STORAGE)
             }
         }else{
             val intentToGallery = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
@@ -93,8 +94,37 @@ class SharePostActivity : AppCompatActivity() {
     }
 
 
-    private fun sharePost() {
-        TODO("Not yet implemented")
+    fun sharePost(view: View) {
+        //uinversal unique id
+        var uuid = UUID.randomUUID()
+        val imageName = "$uuid.jpg"
+
+        //upload to storage
+        val reference = storage.reference
+        val imageReference = reference.child("images").child(imageName)
+
+        selectedImage?.let{
+            imageReference.putFile(it).addOnSuccessListener {
+                //download url -> firestore
+                val postImageReference = storage.reference.child("images").child(imageName)
+                postImageReference.downloadUrl.addOnSuccessListener {
+                    val downloadedUrl = it.toString()
+
+                    val post = hashMapOf("email" to auth.currentUser?.email,
+                                        "image" to downloadedUrl,
+                                        "description" to binding.editTextDescription.text.toString(),
+                                        "date" to Timestamp.now())
+
+                    firestore.collection("Posts").add(post).addOnSuccessListener {
+                        finish()
+                    }.addOnFailureListener{
+                        Toast.makeText(this@SharePostActivity, it.localizedMessage, Toast.LENGTH_LONG).show()
+                    }
+                }
+            }.addOnFailureListener{
+                Toast.makeText(this@SharePostActivity, it.localizedMessage, Toast.LENGTH_LONG).show()
+            }
+        }
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {

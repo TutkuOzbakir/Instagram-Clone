@@ -1,4 +1,4 @@
-package com.tutkuozbakir.instagramclone
+package com.tutkuozbakir.instagramclone.view
 
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity

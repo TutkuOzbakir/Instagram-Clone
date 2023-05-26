@@ -1,4 +1,4 @@
-package com.tutkuozbakir.instagramclone
+package com.tutkuozbakir.instagramclone.view
 
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
@@ -7,7 +7,6 @@ import android.widget.Toast
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
-import com.tutkuozbakir.instagramclone.databinding.ActivityMainBinding
 import com.tutkuozbakir.instagramclone.databinding.ActivitySignupBinding
 
 class SignupActivity : AppCompatActivity() {
