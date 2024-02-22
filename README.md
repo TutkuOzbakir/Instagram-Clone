@@ -1,5 +1,5 @@
 # Instagram-Clone
-Android application developed to learn Firebase concepts
+Android application that allows users to share posts
 
 For authentication ► Firebase Authentication  
 For image storage ► Firebase Storage  
